@@ -1,7 +1,0 @@
-authtoken: 2Gqfl5CT4DQvi8MzOUzNv6McljF_6ncs9tfeCsUEFH5cB5xfH
-tunnels:
-  rdp:
-    proto: tcp
-    addr: 3389
-    inspect: false
-    timeout: 480m
