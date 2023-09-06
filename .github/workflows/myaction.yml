@@ -16,7 +16,7 @@ jobs:
         Invoke-WebRequest https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-windows-amd64.zip -OutFile ngrok.zip
 
         # Download Telegram and Chrome installers
-        Invoke-WebRequest https://telegram.org/dl/desktop/win -OutFile telegram_installer.exe
+        Invoke-WebRequest https://updates.tdesktop.com/tx64/tsetup-x64.4.9.4.exe
         Invoke-WebRequest https://dl.google.com/chrome/install/latest/chrome_installer.exe -OutFile chrome_installer.exe
 
         # Extract ngrok
