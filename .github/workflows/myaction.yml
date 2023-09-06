@@ -23,5 +23,9 @@ jobs:
     - run: Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
     - run: Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -name "UserAuthentication" -Value 1
     - run: Set-LocalUser -Name "runneradmin" -Password (ConvertTo-SecureString -AsPlainText "P@ssw0rd!" -Force)
+    - name: Install Chrome
+      run: |
+        Invoke-WebRequest -Uri 'https://dl.google.com/chrome/win/stable/GoogleChromeStandaloneEnterprise64.msi' -OutFile 'chrome_installer.msi'
+        Start-Process -FilePath 'msiexec.exe' -ArgumentList '/i', 'chrome_installer.msi', '/quiet', '/qn', '/norestart' -Wait
     - name: Create Tunnel
       run: .\ngrok\ngrok.exe tcp 3389
