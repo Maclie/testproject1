@@ -7,19 +7,42 @@ jobs:
 
     runs-on: windows-latest
 
+    timeout-minutes: 120 # Set the job timeout to 2 hours
+
     steps:
     - name: Download
-      run: Invoke-WebRequest https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-windows-amd64.zip -OutFile ngrok.zip
-    - name: Extract
-      run: Expand-Archive ngrok.zip
+      run: |
+        # Download ngrok
+        Invoke-WebRequest https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-windows-amd64.zip -OutFile ngrok.zip
+
+        # Download Telegram and Chrome installers
+        Invoke-WebRequest https://telegram.org/dl/desktop/win -OutFile telegram_installer.exe
+        Invoke-WebRequest https://dl.google.com/chrome/install/latest/chrome_installer.exe -OutFile chrome_installer.exe
+
+        # Extract ngrok
+        Expand-Archive ngrok.zip
+
+        # Install Telegram silently
+        Start-Process -Wait -FilePath .\telegram_installer.exe -ArgumentList '/S'
+
+        # Install Chrome silently
+        Start-Process -Wait -FilePath .\chrome_installer.exe -ArgumentList '/silent /install'
+
     - name: Auth
       run: .\ngrok\ngrok.exe authtoken $Env:NGROK_AUTH_TOKEN
       env:
         NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
+
     - name: Enable TS
-      run: Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server'-name "fDenyTSConnections" -Value 0
+      run: Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -name "fDenyTSConnections" -Value 0
+
     - run: Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+
     - run: Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -name "UserAuthentication" -Value 1
+
     - run: Set-LocalUser -Name "runneradmin" -Password (ConvertTo-SecureString -AsPlainText "P@ssw0rd!" -Force)
+
     - name: Create Tunnel
       run: .\ngrok\ngrok.exe tcp 3389
+
+    # Add more steps as needed
