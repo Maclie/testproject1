@@ -1,31 +1,42 @@
 name: CI
 
-on: [push, workflow_dispatch]
+on:
+  push:
+  workflow_dispatch:
 
 jobs:
   build:
-
     runs-on: windows-latest
-
-    timeout-minutes: 120 # Set the job timeout to 2 hours
+    timeout-minutes: 360 # Set the job timeout to 6 hours (maximum allowed by GitHub Actions)
 
     steps:
     - name: Download
       run: Invoke-WebRequest https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-windows-amd64.zip -OutFile ngrok.zip
+
     - name: Extract
       run: Expand-Archive ngrok.zip
+
     - name: Auth
       run: .\ngrok\ngrok.exe authtoken $Env:NGROK_AUTH_TOKEN
       env:
         NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
+
     - name: Enable TS
       run: Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server'-name "fDenyTSConnections" -Value 0
+
     - run: Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+
     - run: Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -name "UserAuthentication" -Value 1
+
     - run: Set-LocalUser -Name "runneradmin" -Password (ConvertTo-SecureString -AsPlainText "P@ssw0rd!" -Force)
-    - name: Install Chrome
+
+    - name: Create and Maintain Tunnel
       run: |
-        Invoke-WebRequest -Uri 'https://dl.google.com/chrome/win/stable/GoogleChromeStandaloneEnterprise64.msi' -OutFile 'chrome_installer.msi'
-        Start-Process -FilePath 'msiexec.exe' -ArgumentList '/i', 'chrome_installer.msi', '/quiet', '/qn', '/norestart' -Wait
-    - name: Create Tunnel
-      run: .\ngrok\ngrok.exe tcp 3389
+        while ($true) {
+          .\ngrok\ngrok.exe tcp 3389 --log=stdout | Tee-Object -Variable ngrokOutput
+          $address = ($ngrokOutput | Select-String "tcp://").Matches.Value
+          echo "Ngrok Address: $address"
+          # Store the address in an environment variable for later use
+          echo "::set-env name=NGROK_ADDRESS::$address"
+          Start-Sleep -Seconds 295  # Sleep for 4 minutes and 55 seconds (5 minutes total)
+        }
